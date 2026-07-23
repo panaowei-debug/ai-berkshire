@@ -47,6 +47,11 @@ validation tools. Keep compatibility with both Claude Code and Codex users.
   Never assume the current date from training data.
 - Financial data must come from at least two independent sources when the skill
   requires verification.
+- For US stock intraday quotes and daily change, use:
+  `python3 tools/us_stock_quote.py SYMBOL`
+  During US regular session (9:30–16:00 ET, roughly 21:30–04:00 Beijing in
+  summer), the tool uses Finnhub (`FINNHUB_API_KEY` required). After the close,
+  it falls back to TradingView page data.
 - Use exact arithmetic tools for market cap, valuation, cross-source checks, and
   scenario analysis:
   `python3 tools/financial_rigor.py ...`
