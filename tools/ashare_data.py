@@ -393,17 +393,17 @@ def fetch_stock_industry(code: str) -> dict:
 
 
 def fetch_latest_financials_batch(secucodes: list) -> dict:
-    """批量获取最新一期营收与 ROE。返回 {code: {revenue, roe}}"""
+    """批量获取最新财务：优先年报 ROE/负债率，否则用最近一期。返回 {code: {...}}"""
     if not secucodes:
         return {}
     quoted = ",".join(f'"{s}"' for s in secucodes)
     url = "https://datacenter-web.eastmoney.com/api/data/v1/get"
     params = {
         "reportName": "RPT_F10_FINANCE_MAINFINADATA",
-        "columns": "SECUCODE,SECURITY_CODE,TOTALOPERATEREVE,PARENTNETPROFIT,ROEJQ,REPORT_DATE",
+        "columns": "SECUCODE,SECURITY_CODE,TOTALOPERATEREVE,PARENTNETPROFIT,ROEJQ,ZCFZL,REPORT_DATE",
         "filter": f"(SECUCODE in ({quoted}))",
         "pageNumber": "1",
-        "pageSize": str(max(50, len(secucodes) * 3)),
+        "pageSize": str(max(100, len(secucodes) * 5)),
         "sortTypes": "-1",
         "sortColumns": "REPORT_DATE",
     }
@@ -411,16 +411,123 @@ def fetch_latest_financials_batch(secucodes: list) -> dict:
     raw = _curl(f"{url}?{urlencode(params)}", headers=_em_headers())
     data = json.loads(raw)
     rows = data.get("result", {}).get("data", []) or []
-    out = {}
+    grouped: dict[str, list] = {}
     for row in rows:
         code = row.get("SECURITY_CODE")
-        if not code or code in out:
+        if not code:
             continue
+        grouped.setdefault(code, []).append(row)
+
+    out = {}
+    for code, code_rows in grouped.items():
+        annual = [r for r in code_rows if "-12-31" in str(r.get("REPORT_DATE", ""))]
+        pick = annual[0] if annual else code_rows[0]
         out[code] = {
-            "revenue": float(row.get("TOTALOPERATEREVE") or 0),
-            "roe": float(row.get("ROEJQ") or 0),
-            "report_date": (row.get("REPORT_DATE") or "")[:10],
+            "revenue": float(pick.get("TOTALOPERATEREVE") or 0),
+            "net_profit": float(pick.get("PARENTNETPROFIT") or 0),
+            "roe": float(pick.get("ROEJQ") or 0),
+            "debt_ratio": float(pick.get("ZCFZL") or 0),
+            "report_date": (pick.get("REPORT_DATE") or "")[:10],
+            "roe_is_annual": bool(annual),
         }
+    return out
+
+
+def fetch_org_detail_batch(secucodes: list) -> dict:
+    """批量获取企业性质、实控人、概念标签。返回 {code: {...}}"""
+    if not secucodes:
+        return {}
+    out = {}
+    from urllib.parse import urlencode
+    for i in range(0, len(secucodes), 1):
+        secucode = secucodes[i]
+        code = secucode.split(".")[0]
+        params = {
+            "type": "RPT_F10_ORG_BASICINFO",
+            "sty": "ORG_FORM,REAL_CONTROLER,CONTROL_HOLDER,EM2016,BLGAINIAN,BOARD_NAME_1LEVEL,LISTING_DATE",
+            "filter": f'(SECUCODE="{secucode}")',
+            "p": "1",
+            "ps": "1",
+            "source": "HSF10",
+            "client": "PC",
+        }
+        url = "https://datacenter.eastmoney.com/securities/api/data/get?" + urlencode(params)
+        try:
+            raw = _curl(url, headers=_em_headers())
+            data = json.loads(raw)
+            row = ((data.get("result") or {}).get("data") or [None])[0]
+            if not row:
+                continue
+            out[code] = {
+                "org_form": row.get("ORG_FORM") or "",
+                "real_controller": row.get("REAL_CONTROLER") or "",
+                "control_holder": row.get("CONTROL_HOLDER") or "",
+                "em2016": row.get("EM2016") or "",
+                "industry_level1": (row.get("EM2016") or "").split("-")[0],
+                "board_level1": row.get("BOARD_NAME_1LEVEL") or "",
+                "concepts": row.get("BLGAINIAN") or "",
+                "listing_date": (row.get("LISTING_DATE") or "")[:10],
+            }
+        except Exception:
+            continue
+    return out
+
+
+def _parse_cash_div_per_share(profile: str) -> float:
+    """从分红方案文本解析每股现金分红，如 '10派10.30元' -> 1.03。"""
+    import re
+    if not profile:
+        return 0.0
+    m = re.search(r"10派\s*([\d.]+)\s*元", profile)
+    if not m:
+        return 0.0
+    return float(m.group(1)) / 10.0
+
+
+def fetch_dividend_ttm_batch(secucodes: list, as_of: str | None = None) -> dict:
+    """批量估算近12个月现金股息率分子（每股分红合计）。返回 {code: {div_ttm, div_yield_est}}"""
+    if not secucodes:
+        return {}
+    from datetime import datetime, timedelta
+    from urllib.parse import urlencode
+
+    if as_of:
+        end = datetime.strptime(as_of, "%Y-%m-%d")
+    else:
+        end = datetime.now()
+    start = end - timedelta(days=370)
+
+    out = {}
+    for secucode in secucodes:
+        code = secucode.split(".")[0]
+        params = {
+            "reportName": "RPT_SHAREBONUS_DET",
+            "columns": "SECUCODE,SECURITY_CODE,NOTICE_DATE,IMPL_PLAN_PROFILE",
+            "filter": f'(SECUCODE="{secucode}")',
+            "pageNumber": "1",
+            "pageSize": "8",
+            "sortTypes": "-1",
+            "sortColumns": "NOTICE_DATE",
+        }
+        url = "https://datacenter-web.eastmoney.com/api/data/v1/get?" + urlencode(params)
+        try:
+            raw = _curl(url, headers=_em_headers())
+            data = json.loads(raw)
+            rows = (data.get("result") or {}).get("data") or []
+            total = 0.0
+            for row in rows:
+                notice = (row.get("NOTICE_DATE") or "")[:10]
+                if not notice:
+                    continue
+                try:
+                    nd = datetime.strptime(notice, "%Y-%m-%d")
+                except ValueError:
+                    continue
+                if start <= nd <= end:
+                    total += _parse_cash_div_per_share(row.get("IMPL_PLAN_PROFILE") or "")
+            out[code] = {"div_ttm": total}
+        except Exception:
+            out[code] = {"div_ttm": 0.0}
     return out
 
 

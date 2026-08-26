@@ -1,0 +1,63 @@
+{
+  "name": "鹿鼎公高股息价值选股",
+  "version": "1.0",
+  "universe": {
+    "indices": ["000300", "000905", "000922"],
+    "description": "沪深300 + 中证500 + 中证红利，去重后约700+只"
+  },
+  "deposit_rate_anchor": 0.04,
+  "hard_filters": {
+    "min_price": 3,
+    "min_market_cap_yi": 80,
+    "max_pe": 20,
+    "max_pb": 2.5,
+    "max_pb_utilities": 3.5,
+    "max_debt_ratio": 60,
+    "max_debt_ratio_utilities": 70,
+    "min_dividend_yield": 4.0,
+    "min_dividend_yield_utilities": 3.5,
+    "min_roe": 8.0,
+    "min_revenue": 1,
+    "require_profit": true,
+    "exclude_st": true,
+    "exclude_tech": true,
+    "prefer_soe": true,
+    "min_listing_days": 250
+  },
+  "valuation_tiers": {
+    "super_undervalued_dividend_yield": 7.0,
+    "undervalued_dividend_yield": 5.0,
+    "fair_low_dividend_yield": 4.0
+  },
+  "preferred_sectors": [
+    "化石能源",
+    "公用事业",
+    "有色金属",
+    "建筑装饰",
+    "交通运输",
+    "钢铁",
+    "煤炭",
+    "电力"
+  ],
+  "excluded_em2016_level1": [
+    "信息技术",
+    "计算机",
+    "电子",
+    "传媒",
+    "通信"
+  ],
+  "soe_keywords": ["央企", "国企", "国资", "中央", "国有", "人民政府", "财政部", "国资委"],
+  "private_keywords": ["民营", "自然人", "境外"],
+  "weights": {
+    "dividend_yield": 0.30,
+    "roe": 0.25,
+    "pe": 0.20,
+    "pb": 0.15,
+    "debt_ratio": 0.10
+  },
+  "position_rules": {
+    "max_single_stock_pct": 15,
+    "max_single_industry_pct": 30,
+    "core_holdings": 5
+  }
+}
