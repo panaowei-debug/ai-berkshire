@@ -120,6 +120,13 @@ def valuation_tier(dy: float, criteria: dict) -> str:
     return "不达标"
 
 
+def calc_pe_static(market_cap_yi: float, net_profit_yuan: float) -> float:
+    """PE(静) = 总市值 / 年报归母净利润，与雪球/TradingView 一致。"""
+    if market_cap_yi <= 0 or net_profit_yuan <= 0:
+        return 0.0
+    return market_cap_yi / (net_profit_yuan / 1e8)
+
+
 def fetch_org_and_div_parallel(secucodes: list, as_of: str) -> tuple[dict, dict]:
     org = {}
     div = {}
@@ -190,9 +197,12 @@ def cmd_build(as_of: str):
         val = valuations.get(code, {})
         name = q.get("name") or item.get("name", "")
         price = safe_float(q.get("price"))
-        pe = safe_float(val.get("pe_ttm")) or safe_float(q.get("pe"))
-        pb = safe_float(val.get("pb_mrq")) or safe_float(q.get("pb"))
         mcap = safe_float(q.get("market_cap"))
+        net_profit = fin.get("net_profit", 0)
+        pe_static = calc_pe_static(mcap, net_profit)
+        pe_ttm = safe_float(val.get("pe_ttm")) or safe_float(q.get("pe"))
+        pe = pe_static if pe_static > 0 else pe_ttm
+        pb = safe_float(val.get("pb_mrq")) or safe_float(q.get("pb"))
 
         em2016 = ind.get("em2016") or ""
         utility = is_utility(em2016, "")
@@ -223,8 +233,10 @@ def cmd_build(as_of: str):
             "name": name,
             "secucode": secu_map[code],
             "price": price,
-            "pe": pe,
-            "pb": pb,
+            "pe": round(pe, 2),
+            "pe_static": round(pe_static, 2) if pe_static > 0 else None,
+            "pe_ttm": round(pe_ttm, 2) if pe_ttm > 0 else None,
+            "pb": round(pb, 2),
             "market_cap_yi": mcap,
             "roe": fin.get("roe", 0),
             "debt_ratio": fin.get("debt_ratio", 0),
