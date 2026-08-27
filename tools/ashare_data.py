@@ -485,60 +485,66 @@ def _parse_cash_div_per_share(profile: str) -> float:
 
 
 def fetch_dividend_annual_batch(secucodes: list, as_of: str | None = None) -> dict:
-    """按公告日历年分红合计（与东方财富口径一致）。
+    """除权日滚动12个月现金分红合计（与雪球/TradingView 股息率口径一致）。
 
-    取 as_of 当年与上一年公告分红合计中的较大值，避免滚动12个月重复计入。
-    返回 {code: {div_annual, div_year}}。
+    在 as_of 前 365 天内，按除权日（EX_DIVIDEND_DATE）汇总已实施现金分红；
+    无除权日时回退公告日（NOTICE_DATE）。
+    返回 {code: {div_annual, div_year}}，其中 div_annual 为 TTM 每股分红。
     """
     if not secucodes:
         return {}
-    from collections import defaultdict
-    from datetime import datetime
+    from datetime import datetime, timedelta
     from urllib.parse import urlencode
 
     if as_of:
-        as_of_year = int(as_of[:4])
+        as_of_dt = datetime.strptime(as_of[:10], "%Y-%m-%d")
     else:
-        as_of_year = datetime.now().year
+        as_of_dt = datetime.now()
+    window_start = as_of_dt - timedelta(days=365)
 
     out = {}
     for secucode in secucodes:
         code = secucode.split(".")[0]
         params = {
             "reportName": "RPT_SHAREBONUS_DET",
-            "columns": "SECUCODE,SECURITY_CODE,NOTICE_DATE,IMPL_PLAN_PROFILE",
+            "columns": "SECUCODE,SECURITY_CODE,NOTICE_DATE,EX_DIVIDEND_DATE,IMPL_PLAN_PROFILE",
             "filter": f'(SECUCODE="{secucode}")',
             "pageNumber": "1",
             "pageSize": "12",
             "sortTypes": "-1",
-            "sortColumns": "NOTICE_DATE",
+            "sortColumns": "EX_DIVIDEND_DATE",
         }
         url = "https://datacenter-web.eastmoney.com/api/data/v1/get?" + urlencode(params)
         try:
             raw = _curl(url, headers=_em_headers())
             data = json.loads(raw)
             rows = (data.get("result") or {}).get("data") or []
-            by_year: dict[str, float] = defaultdict(float)
+            div_ttm = 0.0
+            latest_ex = ""
             for row in rows:
-                notice = (row.get("NOTICE_DATE") or "")[:10]
-                if not notice:
+                ex_raw = row.get("EX_DIVIDEND_DATE") or row.get("NOTICE_DATE") or ""
+                ex = str(ex_raw)[:10]
+                if not ex:
+                    continue
+                ex_dt = datetime.strptime(ex, "%Y-%m-%d")
+                if not (window_start < ex_dt <= as_of_dt):
                     continue
                 dps = _parse_cash_div_per_share(row.get("IMPL_PLAN_PROFILE") or "")
                 if dps > 0:
-                    by_year[notice[:4]] += dps
-            y0, y1 = str(as_of_year), str(as_of_year - 1)
-            c0, c1 = by_year.get(y0, 0.0), by_year.get(y1, 0.0)
-            if c0 >= c1:
-                out[code] = {"div_annual": c0, "div_year": y0}
-            else:
-                out[code] = {"div_annual": c1, "div_year": y1}
+                    div_ttm += dps
+                    if not latest_ex or ex > latest_ex:
+                        latest_ex = ex
+            out[code] = {
+                "div_annual": div_ttm,
+                "div_year": latest_ex[:4] if latest_ex else "",
+            }
         except Exception:
             out[code] = {"div_annual": 0.0, "div_year": ""}
     return out
 
 
 def fetch_dividend_ttm_batch(secucodes: list, as_of: str | None = None) -> dict:
-    """已弃用：请用 fetch_dividend_annual_batch。保留兼容旧调用。"""
+    """除权日滚动12个月现金分红合计。返回 {code: {div_ttm}}。"""
     annual = fetch_dividend_annual_batch(secucodes, as_of)
     return {code: {"div_ttm": v["div_annual"]} for code, v in annual.items()}
 
