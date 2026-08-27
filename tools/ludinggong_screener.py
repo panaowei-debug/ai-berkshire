@@ -23,12 +23,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
 from ashare_data import (  # noqa: E402
-    fetch_dividend_ttm_batch,
+    fetch_dividend_annual_batch,
     fetch_index_constituents,
     fetch_latest_financials_batch,
     fetch_org_basicinfo_batch,
     fetch_org_detail_batch,
     fetch_quotes_batch,
+    fetch_valuation_em_batch,
 )
 
 POOL_DIR = ROOT / "data" / "ludinggong_pool"
@@ -127,14 +128,12 @@ def fetch_org_and_div_parallel(secucodes: list, as_of: str) -> tuple[dict, dict]
         return fetch_org_detail_batch([sc])
 
     def _div(sc):
-        return fetch_dividend_ttm_batch([sc], as_of)
+        return fetch_dividend_annual_batch([sc], as_of)
 
     with ThreadPoolExecutor(max_workers=10) as ex:
         f_org = {ex.submit(_org, sc): sc for sc in secucodes}
         f_div = {ex.submit(_div, sc): sc for sc in secucodes}
         for fut in as_completed(f_org):
-            sc = f_org[fut]
-            code = sc.split(".")[0]
             try:
                 org.update(fut.result())
             except Exception:
@@ -145,7 +144,7 @@ def fetch_org_and_div_parallel(secucodes: list, as_of: str) -> tuple[dict, dict]
             try:
                 div.update(fut.result())
             except Exception:
-                div[code] = {"div_ttm": 0.0}
+                div[code] = {"div_annual": 0.0, "div_year": ""}
     return org, div
 
 
@@ -177,16 +176,22 @@ def cmd_build(as_of: str):
         industries.update(fetch_org_basicinfo_batch(batch))
         time.sleep(0.05)
 
+    valuations = {}
+    for batch in chunk(secucodes, 40):
+        valuations.update(fetch_valuation_em_batch(batch))
+        time.sleep(0.05)
+
     pre = []
     for item in constituents:
         code = item["code"]
         q = quotes.get(code, {})
         fin = financials.get(code, {})
         ind = industries.get(code, {})
+        val = valuations.get(code, {})
         name = q.get("name") or item.get("name", "")
         price = safe_float(q.get("price"))
-        pe = safe_float(q.get("pe"))
-        pb = safe_float(q.get("pb"))
+        pe = safe_float(val.get("pe_ttm")) or safe_float(q.get("pe"))
+        pb = safe_float(val.get("pb_mrq")) or safe_float(q.get("pb"))
         mcap = safe_float(q.get("market_cap"))
 
         em2016 = ind.get("em2016") or ""
@@ -239,8 +244,10 @@ def cmd_build(as_of: str):
     for row in pre:
         code = row["code"]
         org = org_map.get(code, {})
-        div_ttm = div_map.get(code, {}).get("div_ttm", 0.0)
-        dy = div_ttm / row["price"] * 100 if row["price"] > 0 else 0.0
+        div_info = div_map.get(code, {})
+        div_annual = div_info.get("div_annual", 0.0)
+        div_year = div_info.get("div_year", "")
+        dy = div_annual / row["price"] * 100 if row["price"] > 0 else 0.0
         utility = is_utility(org.get("em2016") or row["em2016"], org.get("board_level1") or "")
         dy_min = hf.get("min_dividend_yield_utilities", hf["min_dividend_yield"]) if utility else hf["min_dividend_yield"]
 
@@ -265,7 +272,8 @@ def cmd_build(as_of: str):
             "industry_level1": board or row["industry_level1"],
             "org_form": org.get("org_form", ""),
             "real_controller": org.get("real_controller", ""),
-            "div_ttm": round(div_ttm, 4),
+            "div_annual": round(div_annual, 4),
+            "div_year": div_year,
             "dividend_yield": round(dy, 2),
             "valuation_tier": tier,
             "is_soe": soe,

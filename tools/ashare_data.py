@@ -484,18 +484,22 @@ def _parse_cash_div_per_share(profile: str) -> float:
     return float(m.group(1)) / 10.0
 
 
-def fetch_dividend_ttm_batch(secucodes: list, as_of: str | None = None) -> dict:
-    """批量估算近12个月现金股息率分子（每股分红合计）。返回 {code: {div_ttm, div_yield_est}}"""
+def fetch_dividend_annual_batch(secucodes: list, as_of: str | None = None) -> dict:
+    """按公告日历年分红合计（与东方财富口径一致）。
+
+    取 as_of 当年与上一年公告分红合计中的较大值，避免滚动12个月重复计入。
+    返回 {code: {div_annual, div_year}}。
+    """
     if not secucodes:
         return {}
-    from datetime import datetime, timedelta
+    from collections import defaultdict
+    from datetime import datetime
     from urllib.parse import urlencode
 
     if as_of:
-        end = datetime.strptime(as_of, "%Y-%m-%d")
+        as_of_year = int(as_of[:4])
     else:
-        end = datetime.now()
-    start = end - timedelta(days=370)
+        as_of_year = datetime.now().year
 
     out = {}
     for secucode in secucodes:
@@ -505,7 +509,7 @@ def fetch_dividend_ttm_batch(secucodes: list, as_of: str | None = None) -> dict:
             "columns": "SECUCODE,SECURITY_CODE,NOTICE_DATE,IMPL_PLAN_PROFILE",
             "filter": f'(SECUCODE="{secucode}")',
             "pageNumber": "1",
-            "pageSize": "8",
+            "pageSize": "12",
             "sortTypes": "-1",
             "sortColumns": "NOTICE_DATE",
         }
@@ -514,20 +518,60 @@ def fetch_dividend_ttm_batch(secucodes: list, as_of: str | None = None) -> dict:
             raw = _curl(url, headers=_em_headers())
             data = json.loads(raw)
             rows = (data.get("result") or {}).get("data") or []
-            total = 0.0
+            by_year: dict[str, float] = defaultdict(float)
             for row in rows:
                 notice = (row.get("NOTICE_DATE") or "")[:10]
                 if not notice:
                     continue
-                try:
-                    nd = datetime.strptime(notice, "%Y-%m-%d")
-                except ValueError:
-                    continue
-                if start <= nd <= end:
-                    total += _parse_cash_div_per_share(row.get("IMPL_PLAN_PROFILE") or "")
-            out[code] = {"div_ttm": total}
+                dps = _parse_cash_div_per_share(row.get("IMPL_PLAN_PROFILE") or "")
+                if dps > 0:
+                    by_year[notice[:4]] += dps
+            y0, y1 = str(as_of_year), str(as_of_year - 1)
+            c0, c1 = by_year.get(y0, 0.0), by_year.get(y1, 0.0)
+            if c0 >= c1:
+                out[code] = {"div_annual": c0, "div_year": y0}
+            else:
+                out[code] = {"div_annual": c1, "div_year": y1}
         except Exception:
-            out[code] = {"div_ttm": 0.0}
+            out[code] = {"div_annual": 0.0, "div_year": ""}
+    return out
+
+
+def fetch_dividend_ttm_batch(secucodes: list, as_of: str | None = None) -> dict:
+    """已弃用：请用 fetch_dividend_annual_batch。保留兼容旧调用。"""
+    annual = fetch_dividend_annual_batch(secucodes, as_of)
+    return {code: {"div_ttm": v["div_annual"]} for code, v in annual.items()}
+
+
+def fetch_valuation_em_batch(secucodes: list) -> dict:
+    """批量获取东财估值：PE(TTM)、PB(MRQ)。返回 {code: {pe_ttm, pb_mrq, trade_date}}"""
+    if not secucodes:
+        return {}
+    quoted = ",".join(f'"{s}"' for s in secucodes)
+    url = "https://datacenter-web.eastmoney.com/api/data/v1/get"
+    params = {
+        "reportName": "RPT_VALUEANALYSIS_DET",
+        "columns": "SECUCODE,SECURITY_CODE,TRADE_DATE,PE_TTM,PB_MRQ",
+        "filter": f"(SECUCODE in ({quoted}))",
+        "pageNumber": "1",
+        "pageSize": str(max(50, len(secucodes) * 3)),
+        "sortTypes": "-1",
+        "sortColumns": "TRADE_DATE",
+    }
+    from urllib.parse import urlencode
+    raw = _curl(f"{url}?{urlencode(params)}", headers=_em_headers())
+    data = json.loads(raw)
+    rows = data.get("result", {}).get("data", []) or []
+    out = {}
+    for row in rows:
+        code = row.get("SECURITY_CODE")
+        if not code or code in out:
+            continue
+        out[code] = {
+            "pe_ttm": float(row.get("PE_TTM") or 0),
+            "pb_mrq": float(row.get("PB_MRQ") or 0),
+            "trade_date": (row.get("TRADE_DATE") or "")[:10],
+        }
     return out
 
 
