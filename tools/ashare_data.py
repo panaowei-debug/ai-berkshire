@@ -20,20 +20,20 @@ import subprocess
 import sys
 from decimal import Decimal, ROUND_HALF_EVEN
 
-_TIMEOUT = 15
+_TIMEOUT = 30
 
 
-def _curl(url):
+def _curl(url, headers=None):
     """用 curl --noproxy 直连，绕过系统代理。"""
-    result = subprocess.run(
-        ["/usr/bin/curl", "-s", "--noproxy", "*",
-         "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-         url],
-        capture_output=True, timeout=_TIMEOUT,
-    )
+    cmd = ["/usr/bin/curl", "-s", "--noproxy", "*", url]
+    if headers:
+        for k, v in headers.items():
+            cmd.extend(["-H", f"{k}: {v}"])
+    else:
+        cmd.extend(["-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"])
+    result = subprocess.run(cmd, capture_output=True, timeout=_TIMEOUT)
     if result.returncode != 0 or not result.stdout.strip():
         raise ConnectionError(f"请求失败: {url}")
-    # 腾讯行情 API 返回 GBK 编码，其他返回 UTF-8
     try:
         return result.stdout.decode("utf-8")
     except UnicodeDecodeError:
@@ -267,6 +267,174 @@ def cmd_financials(code: str):
             print(f"  ROE(加权):      {_fmt_pct(roe)}")
 
 
+def _market_suffix(code: str) -> str:
+    code_clean = code.strip().replace(".SH", "").replace(".SZ", "").replace(".BJ", "")
+    market = "SH" if code_clean.startswith(("6", "9", "5")) else "SZ"
+    return code_clean, market
+
+
+def _em_headers():
+    return {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+        "Referer": "https://quote.eastmoney.com/",
+    }
+
+
+def fetch_index_constituents(index_code: str = "000300") -> list:
+    """获取指数成分股列表。返回 [{code, name, secucode}, ...]"""
+    url = "https://datacenter-web.eastmoney.com/api/data/v1/get"
+    params = {
+        "reportName": "RPT_INDEX_CONSTITUENT",
+        "columns": "SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR",
+        "filter": f'(INDEX_CODE="{index_code}")',
+        "pageNumber": "1",
+        "pageSize": "500",
+        "sortTypes": "",
+        "sortColumns": "",
+    }
+    from urllib.parse import urlencode
+    raw = _curl(f"{url}?{urlencode(params)}", headers=_em_headers())
+    data = json.loads(raw)
+    rows = data.get("result", {}).get("data", []) or []
+    out = []
+    for row in rows:
+        code = row.get("SECURITY_CODE", "")
+        if not code:
+            continue
+        out.append({
+            "code": code,
+            "name": row.get("SECURITY_NAME_ABBR", ""),
+            "secucode": row.get("SECUCODE", ""),
+        })
+    return out
+
+
+def fetch_quotes_batch(codes: list) -> dict:
+    """批量获取腾讯行情。返回 {code: quote_dict}"""
+    if not codes:
+        return {}
+    qq_codes = ",".join(_qq_code(c) for c in codes)
+    raw = _curl(f"https://qt.gtimg.cn/q={qq_codes}")
+    out = {}
+    for line in raw.strip().split(";"):
+        line = line.strip()
+        if not line or "~" not in line:
+            continue
+        parsed = _parse_qq_quote(line)
+        if parsed.get("code"):
+            out[parsed["code"]] = parsed
+    return out
+
+
+def fetch_kline_avg_turnover(code: str, days: int = 60) -> float:
+    """近 N 日日均成交额（元）。基于腾讯前复权日 K 估算。"""
+    qq = _qq_code(code)
+    url = (
+        "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?"
+        f"param={qq},day,,,{days},qfq"
+    )
+    raw = _curl(url)
+    data = json.loads(raw)
+    stock = data.get("data", {}).get(qq, {})
+    rows = stock.get("qfqday") or stock.get("day") or []
+    if not rows:
+        return 0.0
+    amounts = []
+    for row in rows[-days:]:
+        if len(row) < 6:
+            continue
+        try:
+            close = float(row[1])
+            volume_hands = float(row[5])
+        except (TypeError, ValueError):
+            continue
+        amounts.append(volume_hands * 100 * close)
+    return sum(amounts) / len(amounts) if amounts else 0.0
+
+
+def fetch_org_basicinfo_batch(secucodes: list) -> dict:
+    """批量获取 EM2016 行业。返回 {code: {em2016, industry_level1, name}}"""
+    if not secucodes:
+        return {}
+    quoted = ",".join(f'"{s}"' for s in secucodes)
+    url = "https://datacenter-web.eastmoney.com/api/data/v1/get"
+    params = {
+        "reportName": "RPT_F10_ORG_BASICINFO",
+        "columns": "SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR,EM2016",
+        "filter": f"(SECUCODE in ({quoted}))",
+        "pageNumber": "1",
+        "pageSize": str(max(10, len(secucodes))),
+    }
+    from urllib.parse import urlencode
+    raw = _curl(f"{url}?{urlencode(params)}", headers=_em_headers())
+    data = json.loads(raw)
+    rows = data.get("result", {}).get("data", []) or []
+    out = {}
+    for row in rows:
+        code = row.get("SECURITY_CODE")
+        if not code:
+            continue
+        em2016 = row.get("EM2016") or ""
+        out[code] = {
+            "em2016": em2016,
+            "industry_level1": em2016.split("-")[0] if em2016 else "",
+            "name": row.get("SECURITY_NAME_ABBR", ""),
+            "list_date": "",
+        }
+    return out
+
+
+def fetch_stock_industry(code: str) -> dict:
+    """获取东财行业分类 EM2016（单股）。"""
+    code_clean, market = _market_suffix(code)
+    secucode = f"{code_clean}.{market}"
+    info = fetch_org_basicinfo_batch([secucode]).get(code_clean, {})
+    return info
+
+
+def fetch_latest_financials_batch(secucodes: list) -> dict:
+    """批量获取最新一期营收与 ROE。返回 {code: {revenue, roe}}"""
+    if not secucodes:
+        return {}
+    quoted = ",".join(f'"{s}"' for s in secucodes)
+    url = "https://datacenter-web.eastmoney.com/api/data/v1/get"
+    params = {
+        "reportName": "RPT_F10_FINANCE_MAINFINADATA",
+        "columns": "SECUCODE,SECURITY_CODE,TOTALOPERATEREVE,PARENTNETPROFIT,ROEJQ,REPORT_DATE",
+        "filter": f"(SECUCODE in ({quoted}))",
+        "pageNumber": "1",
+        "pageSize": str(max(50, len(secucodes) * 3)),
+        "sortTypes": "-1",
+        "sortColumns": "REPORT_DATE",
+    }
+    from urllib.parse import urlencode
+    raw = _curl(f"{url}?{urlencode(params)}", headers=_em_headers())
+    data = json.loads(raw)
+    rows = data.get("result", {}).get("data", []) or []
+    out = {}
+    for row in rows:
+        code = row.get("SECURITY_CODE")
+        if not code or code in out:
+            continue
+        out[code] = {
+            "revenue": float(row.get("TOTALOPERATEREVE") or 0),
+            "roe": float(row.get("ROEJQ") or 0),
+            "report_date": (row.get("REPORT_DATE") or "")[:10],
+        }
+    return out
+
+
+def cmd_index_constituents(index_code: str):
+    rows = fetch_index_constituents(index_code)
+    print("=" * 60)
+    print(f"指数成分: {index_code}（共 {len(rows)} 只）")
+    print("=" * 60)
+    for row in rows[:20]:
+        print(f"  {row['code']} {row['name']}")
+    if len(rows) > 20:
+        print(f"  ... 其余 {len(rows) - 20} 只")
+
+
 def cmd_search(keyword: str):
     """搜索股票代码。"""
     url = "https://searchadapter.eastmoney.com/api/suggest/get"
@@ -319,6 +487,9 @@ def main():
     p_search = sub.add_parser("search", help="搜索股票代码")
     p_search.add_argument("keyword", help="公司名或关键词")
 
+    p_index = sub.add_parser("index-constituents", help="指数成分股列表")
+    p_index.add_argument("index_code", nargs="?", default="000300", help="指数代码，默认000300")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -330,6 +501,7 @@ def main():
         "financials": lambda: cmd_financials(args.code),
         "valuation": lambda: cmd_valuation(args.code),
         "search": lambda: cmd_search(args.keyword),
+        "index-constituents": lambda: cmd_index_constituents(args.index_code),
     }
     cmds[args.command]()
 

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>沪深300龙头股票名单（96只）</title>
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --card: #ffffff;
+      --text: #2c2c2c;
+      --muted: #666;
+      --accent: #1a6b4a;
+      --accent-light: #e8f4ee;
+      --border: #e0ddd6;
+      --shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    header {
+      background: linear-gradient(135deg, #1a6b4a 0%, #2d8f66 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 8px; }
+    header .sub { font-size: 1rem; opacity: .92; }
+    header .meta { margin-top: 14px; font-size: .95rem; opacity: .85; }
+    .intro {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--shadow);
+    }
+    .intro p { color: var(--muted); font-size: 1rem; }
+    .search-bar {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-bar label { font-weight: 600; white-space: nowrap; }
+    .search-bar input {
+      flex: 1;
+      min-width: 200px;
+      font-size: 1.1rem;
+      padding: 10px 14px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+    }
+    .search-bar input:focus { border-color: var(--accent); }
+    .search-bar button {
+      font-size: 1rem;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .tag {
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: .85rem;
+    }
+    .industry {
+      background: var(--card);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .industry h2 {
+      font-size: 1.25rem;
+      padding: 16px 20px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+    }
+    .badge {
+      font-size: .85rem;
+      font-weight: normal;
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      margin-left: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #faf9f7; font-weight: 600; font-size: .9rem; color: var(--muted); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafdf9; }
+    .code { font-family: monospace; font-size: 1.05rem; color: var(--accent); font-weight: 600; }
+    .name { font-weight: 600; }
+    .rank { color: var(--muted); }
+    .cap, .price { color: var(--muted); font-size: .95rem; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: .85rem;
+      padding: 24px 0 40px;
+    }
+    .hidden { display: none !important; }
+    @media print {
+      body { background: #fff; font-size: 14px; }
+      .search-bar { display: none; }
+      header { background: #1a6b4a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .industry { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+    }
+    @media (max-width: 600px) {
+      body { font-size: 16px; padding: 12px; }
+      th, td { padding: 10px 12px; }
+      .cap, .price { display: none; }
+      th.cap-h, th.price-h, td.cap, td.price { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>沪深300龙头股票名单</h1>
+      <p class="sub">从沪深300（A股最大的300家上市公司）中，按20个主流行业各选龙头企业，共 <strong>96</strong> 只</p>
+      <p class="meta">数据日期：2026-08-25 · 仅供学习参考，不构成投资建议</p>
+    </header>
+
+    <div class="intro">
+      <p>这份名单按<strong>行业</strong>分组，每个行业里排在前面的通常是市值更大、成交更活跃的龙头公司。可以用下面的搜索框，输入股票名称或代码快速查找。</p>
+    </div>
+
+    <div class="search-bar">
+      <label for="q">🔍 搜索</label>
+      <input id="q" type="search" placeholder="输入股票名称或代码，如：茅台、600519" autocomplete="off">
+      <button type="button" onclick="window.print()">打印 / 存PDF</button>
+    </div>
+
+    <div class="tags"><span class='tag'>交通运输 5只</span><span class='tag'>公用环保 5只</span><span class='tag'>医药生物 5只</span><span class='tag'>可选消费 5只</span><span class='tag'>国防军工 5只</span><span class='tag'>基础化工 5只</span><span class='tag'>家用电器 3只</span><span class='tag'>建筑材料 1只</span><span class='tag'>建筑装饰 4只</span><span class='tag'>有色金属 5只</span><span class='tag'>机械设备 5只</span><span class='tag'>汽车 5只</span><span class='tag'>煤炭钢铁 5只</span><span class='tag'>电力设备 5只</span><span class='tag'>电子 5只</span><span class='tag'>石油石化 5只</span><span class='tag'>计算机 5只</span><span class='tag'>通信 5只</span><span class='tag'>银行 3只</span><span class='tag'>非银金融 5只</span><span class='tag'>食品饮料 5只</span></div>
+
+    <section class='industry' data-industry='交通运输'><h2>交通运输 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>601919</td><td class='name'>中远海控</td><td class='rank'>第1名</td><td class='cap'>2143亿</td><td class='price'>17.07元</td></tr><tr><td class='code'>601872</td><td class='name'>招商轮船</td><td class='rank'>第2名</td><td class='cap'>1520亿</td><td class='price'>18.83元</td></tr><tr><td class='code'>002352</td><td class='name'>顺丰控股</td><td class='rank'>第3名</td><td class='cap'>1580亿</td><td class='price'>32.92元</td></tr><tr><td class='code'>601816</td><td class='name'>京沪高铁</td><td class='rank'>第4名</td><td class='cap'>2383亿</td><td class='price'>4.87元</td></tr><tr><td class='code'>600026</td><td class='name'>中远海能</td><td class='rank'>第5名</td><td class='cap'>729亿</td><td class='price'>19.04元</td></tr></tbody></table></section><section class='industry' data-industry='公用环保'><h2>公用环保 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>600900</td><td class='name'>长江电力</td><td class='rank'>第1名</td><td class='cap'>6902亿</td><td class='price'>28.21元</td></tr><tr><td class='code'>600011</td><td class='name'>华能国际</td><td class='rank'>第2名</td><td class='cap'>736亿</td><td class='price'>6.69元</td></tr><tr><td class='code'>601985</td><td class='name'>中国核电</td><td class='rank'>第3名</td><td class='cap'>1669亿</td><td class='price'>8.84元</td></tr><tr><td class='code'>600795</td><td class='name'>国电电力</td><td class='rank'>第4名</td><td class='cap'>917亿</td><td class='price'>5.14元</td></tr><tr><td class='code'>600025</td><td class='name'>华能水电</td><td class='rank'>第5名</td><td class='cap'>1824亿</td><td class='price'>9.79元</td></tr></tbody></table></section><section class='industry' data-industry='医药生物'><h2>医药生物 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>603259</td><td class='name'>药明康德</td><td class='rank'>第1名</td><td class='cap'>3982亿</td><td class='price'>161.00元</td></tr><tr><td class='code'>600276</td><td class='name'>恒瑞医药</td><td class='rank'>第2名</td><td class='cap'>2966亿</td><td class='price'>46.49元</td></tr><tr><td class='code'>300760</td><td class='name'>迈瑞医疗</td><td class='rank'>第3名</td><td class='cap'>1963亿</td><td class='price'>162.12元</td></tr><tr><td class='code'>688271</td><td class='name'>联影医疗</td><td class='rank'>第4名</td><td class='cap'>880亿</td><td class='price'>106.77元</td></tr><tr><td class='code'>002001</td><td class='name'>新 和 成</td><td class='rank'>第5名</td><td class='cap'>799亿</td><td class='price'>26.32元</td></tr></tbody></table></section><section class='industry' data-industry='可选消费'><h2>可选消费 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>002714</td><td class='name'>牧原股份</td><td class='rank'>第1名</td><td class='cap'>1310亿</td><td class='price'>39.93元</td></tr><tr><td class='code'>601888</td><td class='name'>中国中免</td><td class='rank'>第2名</td><td class='cap'>1027亿</td><td class='price'>52.61元</td></tr><tr><td class='code'>300498</td><td class='name'>温氏股份</td><td class='rank'>第3名</td><td class='cap'>841亿</td><td class='price'>14.14元</td></tr><tr><td class='code'>002311</td><td class='name'>海大集团</td><td class='rank'>第4名</td><td class='cap'>744亿</td><td class='price'>45.00元</td></tr><tr><td class='code'>600415</td><td class='name'>小商品城</td><td class='rank'>第5名</td><td class='cap'>667亿</td><td class='price'>12.17元</td></tr></tbody></table></section><section class='industry' data-industry='国防军工'><h2>国防军工 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>600150</td><td class='name'>中国船舶</td><td class='rank'>第1名</td><td class='cap'>2547亿</td><td class='price'>33.84元</td></tr><tr><td class='code'>600893</td><td class='name'>航发动力</td><td class='rank'>第2名</td><td class='cap'>967亿</td><td class='price'>36.28元</td></tr><tr><td class='code'>600482</td><td class='name'>中国动力</td><td class='rank'>第3名</td><td class='cap'>722亿</td><td class='price'>31.85元</td></tr><tr><td class='code'>600118</td><td class='name'>中国卫星</td><td class='rank'>第4名</td><td class='cap'>712亿</td><td class='price'>60.24元</td></tr><tr><td class='code'>600760</td><td class='name'>中航沈飞</td><td class='rank'>第5名</td><td class='cap'>1254亿</td><td class='price'>44.32元</td></tr></tbody></table></section><section class='industry' data-industry='基础化工'><h2>基础化工 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>600309</td><td class='name'>万华化学</td><td class='rank'>第1名</td><td class='cap'>2281亿</td><td class='price'>72.87元</td></tr><tr><td class='code'>600989</td><td class='name'>宝丰能源</td><td class='rank'>第2名</td><td class='cap'>1704亿</td><td class='price'>23.24元</td></tr><tr><td class='code'>600176</td><td class='name'>中国巨石</td><td class='rank'>第3名</td><td class='cap'>1580亿</td><td class='price'>39.79元</td></tr><tr><td class='code'>000792</td><td class='name'>盐湖股份</td><td class='rank'>第4名</td><td class='cap'>1453亿</td><td class='price'>27.45元</td></tr><tr><td class='code'>600160</td><td class='name'>巨化股份</td><td class='rank'>第5名</td><td class='cap'>1024亿</td><td class='price'>37.92元</td></tr></tbody></table></section><section class='industry' data-industry='家用电器'><h2>家用电器 <span class='badge'>3只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>000333</td><td class='name'>美的集团</td><td class='rank'>第1名</td><td class='cap'>5968亿</td><td class='price'>86.69元</td></tr><tr><td class='code'>000651</td><td class='name'>格力电器</td><td class='rank'>第2名</td><td class='cap'>2298亿</td><td class='price'>41.62元</td></tr><tr><td class='code'>600690</td><td class='name'>海尔智家</td><td class='rank'>第3名</td><td class='cap'>1328亿</td><td class='price'>21.23元</td></tr></tbody></table></section><section class='industry' data-industry='建筑材料'><h2>建筑材料 <span class='badge'>1只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>600585</td><td class='name'>海螺水泥</td><td class='rank'>第1名</td><td class='cap'>700亿</td><td class='price'>17.60元</td></tr></tbody></table></section><section class='industry' data-industry='建筑装饰'><h2>建筑装饰 <span class='badge'>4只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>601668</td><td class='name'>中国建筑</td><td class='rank'>第1名</td><td class='cap'>1847亿</td><td class='price'>4.47元</td></tr><tr><td class='code'>601390</td><td class='name'>中国中铁</td><td class='rank'>第2名</td><td class='cap'>890亿</td><td class='price'>4.38元</td></tr><tr><td class='code'>601117</td><td class='name'>中国化学</td><td class='rank'>第3名</td><td class='cap'>458亿</td><td class='price'>7.52元</td></tr><tr><td class='code'>601669</td><td class='name'>中国电建</td><td class='rank'>第4名</td><td class='cap'>608亿</td><td class='price'>4.65元</td></tr></tbody></table></section><section class='industry' data-industry='有色金属'><h2>有色金属 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>601899</td><td class='name'>紫金矿业</td><td class='rank'>第1名</td><td class='cap'>6939亿</td><td class='price'>33.68元</td></tr><tr><td class='code'>603993</td><td class='name'>洛阳钼业</td><td class='rank'>第2名</td><td class='cap'>3216亿</td><td class='price'>18.42元</td></tr><tr><td class='code'>600111</td><td class='name'>北方稀土</td><td class='rank'>第3名</td><td class='cap'>1441亿</td><td class='price'>39.85元</td></tr><tr><td class='code'>000657</td><td class='name'>中钨高新</td><td class='rank'>第4名</td><td class='cap'>927亿</td><td class='price'>63.81元</td></tr><tr><td class='code'>600549</td><td class='name'>厦门钨业</td><td class='rank'>第5名</td><td class='cap'>814亿</td><td class='price'>52.39元</td></tr></tbody></table></section><section class='industry' data-industry='机械设备'><h2>机械设备 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>300124</td><td class='name'>汇川技术</td><td class='rank'>第1名</td><td class='cap'>1480亿</td><td class='price'>61.39元</td></tr><tr><td class='code'>600031</td><td class='name'>三一重工</td><td class='rank'>第2名</td><td class='cap'>1606亿</td><td class='price'>18.95元</td></tr><tr><td class='code'>002050</td><td class='name'>三花智控</td><td class='rank'>第3名</td><td class='cap'>1327亿</td><td class='price'>35.95元</td></tr><tr><td class='code'>000425</td><td class='name'>徐工机械</td><td class='rank'>第4名</td><td class='cap'>720亿</td><td class='price'>8.02元</td></tr><tr><td class='code'>601100</td><td class='name'>恒立液压</td><td class='rank'>第5名</td><td class='cap'>1351亿</td><td class='price'>100.74元</td></tr></tbody></table></section><section class='industry' data-industry='汽车'><h2>汽车 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>002594</td><td class='name'>比亚迪</td><td class='rank'>第1名</td><td class='cap'>3185亿</td><td class='price'>91.36元</td></tr><tr><td class='code'>000338</td><td class='name'>潍柴动力</td><td class='rank'>第2名</td><td class='cap'>1339亿</td><td class='price'>27.02元</td></tr><tr><td class='code'>601766</td><td class='name'>中国中车</td><td class='rank'>第3名</td><td class='cap'>1491亿</td><td class='price'>6.13元</td></tr><tr><td class='code'>600660</td><td class='name'>福耀玻璃</td><td class='rank'>第4名</td><td class='cap'>1155亿</td><td class='price'>57.67元</td></tr><tr><td class='code'>600104</td><td class='name'>上汽集团</td><td class='rank'>第5名</td><td class='cap'>1185亿</td><td class='price'>10.31元</td></tr></tbody></table></section><section class='industry' data-industry='煤炭钢铁'><h2>煤炭钢铁 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>601088</td><td class='name'>中国神华</td><td class='rank'>第1名</td><td class='cap'>7779亿</td><td class='price'>47.17元</td></tr><tr><td class='code'>601225</td><td class='name'>陕西煤业</td><td class='rank'>第2名</td><td class='cap'>2571亿</td><td class='price'>26.52元</td></tr><tr><td class='code'>601898</td><td class='name'>中煤能源</td><td class='rank'>第3名</td><td class='cap'>1380亿</td><td class='price'>15.08元</td></tr><tr><td class='code'>600188</td><td class='name'>兖矿能源</td><td class='rank'>第4名</td><td class='cap'>1294亿</td><td class='price'>21.71元</td></tr><tr><td class='code'>600019</td><td class='name'>宝钢股份</td><td class='rank'>第5名</td><td class='cap'>1253亿</td><td class='price'>5.85元</td></tr></tbody></table></section><section class='industry' data-industry='电力设备'><h2>电力设备 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>300750</td><td class='name'>宁德时代</td><td class='rank'>第1名</td><td class='cap'>16049亿</td><td class='price'>376.73元</td></tr><tr><td class='code'>300014</td><td class='name'>亿纬锂能</td><td class='rank'>第2名</td><td class='cap'>1153亿</td><td class='price'>54.57元</td></tr><tr><td class='code'>300274</td><td class='name'>阳光电源</td><td class='rank'>第3名</td><td class='cap'>1740亿</td><td class='price'>109.59元</td></tr><tr><td class='code'>600089</td><td class='name'>特变电工</td><td class='rank'>第4名</td><td class='cap'>960亿</td><td class='price'>19.00元</td></tr><tr><td class='code'>002028</td><td class='name'>思源电气</td><td class='rank'>第5名</td><td class='cap'>1036亿</td><td class='price'>169.60元</td></tr></tbody></table></section><section class='industry' data-industry='电子'><h2>电子 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>688256</td><td class='name'>寒武纪</td><td class='rank'>第1名</td><td class='cap'>6354亿</td><td class='price'>1010.48元</td></tr><tr><td class='code'>601138</td><td class='name'>工业富联</td><td class='rank'>第2名</td><td class='cap'>11936亿</td><td class='price'>60.15元</td></tr><tr><td class='code'>688041</td><td class='name'>海光信息</td><td class='rank'>第3名</td><td class='cap'>5394亿</td><td class='price'>232.06元</td></tr><tr><td class='code'>688012</td><td class='name'>中微公司</td><td class='rank'>第4名</td><td class='cap'>3335亿</td><td class='price'>354.00元</td></tr><tr><td class='code'>002475</td><td class='name'>立讯精密</td><td class='rank'>第5名</td><td class='cap'>4019亿</td><td class='price'>54.86元</td></tr></tbody></table></section><section class='industry' data-industry='石油石化'><h2>石油石化 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>601857</td><td class='name'>中国石油</td><td class='rank'>第1名</td><td class='cap'>18119亿</td><td class='price'>11.19元</td></tr><tr><td class='code'>600028</td><td class='name'>中国石化</td><td class='rank'>第2名</td><td class='cap'>5079亿</td><td class='price'>5.36元</td></tr><tr><td class='code'>600938</td><td class='name'>中国海油</td><td class='rank'>第3名</td><td class='cap'>1002亿</td><td class='price'>33.51元</td></tr><tr><td class='code'>600346</td><td class='name'>恒力石化</td><td class='rank'>第4名</td><td class='cap'>1288亿</td><td class='price'>18.30元</td></tr><tr><td class='code'>002493</td><td class='name'>荣盛石化</td><td class='rank'>第5名</td><td class='cap'>1238亿</td><td class='price'>13.22元</td></tr></tbody></table></section><section class='industry' data-industry='计算机'><h2>计算机 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>002415</td><td class='name'>海康威视</td><td class='rank'>第1名</td><td class='cap'>3144亿</td><td class='price'>34.75元</td></tr><tr><td class='code'>300059</td><td class='name'>东方财富</td><td class='rank'>第2名</td><td class='cap'>2535亿</td><td class='price'>18.93元</td></tr><tr><td class='code'>688111</td><td class='name'>金山办公</td><td class='rank'>第3名</td><td class='cap'>1089亿</td><td class='price'>234.75元</td></tr><tr><td class='code'>000938</td><td class='name'>紫光股份</td><td class='rank'>第4名</td><td class='cap'>1004亿</td><td class='price'>35.10元</td></tr><tr><td class='code'>000977</td><td class='name'>浪潮信息</td><td class='rank'>第5名</td><td class='cap'>1087亿</td><td class='price'>74.11元</td></tr></tbody></table></section><section class='industry' data-industry='通信'><h2>通信 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>300308</td><td class='name'>中际旭创</td><td class='rank'>第1名</td><td class='cap'>9390亿</td><td class='price'>846.00元</td></tr><tr><td class='code'>300502</td><td class='name'>新易盛</td><td class='rank'>第2名</td><td class='cap'>5028亿</td><td class='price'>400.87元</td></tr><tr><td class='code'>000063</td><td class='name'>中兴通讯</td><td class='rank'>第3名</td><td class='cap'>1346亿</td><td class='price'>33.42元</td></tr><tr><td class='code'>601728</td><td class='name'>中国电信</td><td class='rank'>第4名</td><td class='cap'>5007亿</td><td class='price'>6.45元</td></tr><tr><td class='code'>600522</td><td class='name'>中天科技</td><td class='rank'>第5名</td><td class='cap'>1157亿</td><td class='price'>33.89元</td></tr></tbody></table></section><section class='industry' data-industry='银行'><h2>银行 <span class='badge'>3只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>601288</td><td class='name'>农业银行</td><td class='rank'>第1名</td><td class='cap'>21868亿</td><td class='price'>6.85元</td></tr><tr><td class='code'>600036</td><td class='name'>招商银行</td><td class='rank'>第2名</td><td class='cap'>8148亿</td><td class='price'>39.50元</td></tr><tr><td class='code'>601398</td><td class='name'>工商银行</td><td class='rank'>第3名</td><td class='cap'>21299亿</td><td class='price'>7.90元</td></tr></tbody></table></section><section class='industry' data-industry='非银金融'><h2>非银金融 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>601318</td><td class='name'>中国平安</td><td class='rank'>第1名</td><td class='cap'>5864亿</td><td class='price'>55.01元</td></tr><tr><td class='code'>600030</td><td class='name'>中信证券</td><td class='rank'>第2名</td><td class='cap'>3306亿</td><td class='price'>27.15元</td></tr><tr><td class='code'>601211</td><td class='name'>国泰海通</td><td class='rank'>第3名</td><td class='cap'>2328亿</td><td class='price'>17.31元</td></tr><tr><td class='code'>601628</td><td class='name'>中国人寿</td><td class='rank'>第4名</td><td class='cap'>7830亿</td><td class='price'>37.60元</td></tr><tr><td class='code'>600999</td><td class='name'>招商证券</td><td class='rank'>第5名</td><td class='cap'>1311亿</td><td class='price'>17.66元</td></tr></tbody></table></section><section class='industry' data-industry='食品饮料'><h2>食品饮料 <span class='badge'>5只</span></h2><table><thead><tr><th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th></tr></thead><tbody><tr><td class='code'>600519</td><td class='name'>贵州茅台</td><td class='rank'>第1名</td><td class='cap'>16301亿</td><td class='price'>1304.00元</td></tr><tr><td class='code'>000858</td><td class='name'>五 粮 液</td><td class='rank'>第2名</td><td class='cap'>2776亿</td><td class='price'>71.52元</td></tr><tr><td class='code'>600887</td><td class='name'>伊利股份</td><td class='rank'>第3名</td><td class='cap'>1630亿</td><td class='price'>25.90元</td></tr><tr><td class='code'>600809</td><td class='name'>山西汾酒</td><td class='rank'>第4名</td><td class='cap'>1423亿</td><td class='price'>116.66元</td></tr><tr><td class='code'>000568</td><td class='name'>泸州老窖</td><td class='rank'>第5名</td><td class='cap'>1246亿</td><td class='price'>84.73元</td></tr></tbody></table></section>
+
+    <footer>沪深300龙头池 · AI Berkshire 投研工具生成 · 2026-08-25</footer>
+  </div>
+  <script>
+    const q = document.getElementById('q');
+    q.addEventListener('input', () => {
+      const term = q.value.trim().toLowerCase();
+      document.querySelectorAll('.industry').forEach(sec => {
+        let any = false;
+        sec.querySelectorAll('tbody tr').forEach(tr => {
+          const text = tr.textContent.toLowerCase();
+          const show = !term || text.includes(term);
+          tr.classList.toggle('hidden', !show);
+          if (show) any = true;
+        });
+        sec.classList.toggle('hidden', !any);
+      });
+    });
+  </script>
+</body>
+</html>
