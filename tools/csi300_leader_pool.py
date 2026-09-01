@@ -370,6 +370,255 @@ def cmd_build(as_of: str, no_buffer: bool = False):
         print(f"  {industry}: {count}")
 
 
+def _fmt_cap_yi(cap: float) -> str:
+    if not cap:
+        return "—"
+    return f"{cap / 1e8:.0f}"
+
+
+def render_pool_html(payload: dict) -> str:
+    """生成适合长辈阅读的龙头池 HTML 页面。"""
+    from collections import defaultdict
+    import html as html_mod
+
+    as_of = payload.get("as_of", "")
+    stocks = payload.get("stocks", [])
+    meta = payload.get("meta", {})
+    industry_counts = meta.get("industry_counts", {})
+
+    by_industry: dict[str, list] = defaultdict(list)
+    for row in stocks:
+        by_industry[row.get("strategy_industry", "其他")].append(row)
+    for rows in by_industry.values():
+        rows.sort(key=lambda x: x.get("industry_rank", 99))
+
+    industry_order = sorted(by_industry.keys())
+
+    industry_sections = []
+    for industry in industry_order:
+        rows = by_industry[industry]
+        trs = []
+        for r in rows:
+            trs.append(
+                "<tr>"
+                f"<td class='code'>{html_mod.escape(r['code'])}</td>"
+                f"<td class='name'>{html_mod.escape(r['name'])}</td>"
+                f"<td class='rank'>第{int(r.get('industry_rank', 0))}名</td>"
+                f"<td class='cap'>{_fmt_cap_yi(r.get('float_cap', 0))}亿</td>"
+                f"<td class='price'>{r.get('price', 0):.2f}元</td>"
+                "</tr>"
+            )
+        industry_sections.append(
+            f"<section class='industry' data-industry='{html_mod.escape(industry)}'>"
+            f"<h2>{html_mod.escape(industry)} <span class='badge'>{len(rows)}只</span></h2>"
+            "<table><thead><tr>"
+            "<th>代码</th><th>股票名称</th><th>行业排名</th><th>流通市值</th><th>股价</th>"
+            "</tr></thead><tbody>"
+            + "".join(trs)
+            + "</tbody></table></section>"
+        )
+
+    industry_summary = "".join(
+        f"<span class='tag'>{html_mod.escape(k)} {v}只</span>"
+        for k, v in sorted(industry_counts.items())
+    )
+
+    return f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>沪深300龙头股票名单（{len(stocks)}只）</title>
+  <style>
+    :root {{
+      --bg: #f7f5f0;
+      --card: #ffffff;
+      --text: #2c2c2c;
+      --muted: #666;
+      --accent: #1a6b4a;
+      --accent-light: #e8f4ee;
+      --border: #e0ddd6;
+      --shadow: 0 2px 12px rgba(0,0,0,.06);
+    }}
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.6;
+      padding: 20px;
+    }}
+    .wrap {{ max-width: 960px; margin: 0 auto; }}
+    header {{
+      background: linear-gradient(135deg, #1a6b4a 0%, #2d8f66 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }}
+    header h1 {{ font-size: 1.75rem; font-weight: 700; margin-bottom: 8px; }}
+    header .sub {{ font-size: 1rem; opacity: .92; }}
+    header .meta {{ margin-top: 14px; font-size: .95rem; opacity: .85; }}
+    .intro {{
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--shadow);
+    }}
+    .intro p {{ color: var(--muted); font-size: 1rem; }}
+    .search-bar {{
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }}
+    .search-bar label {{ font-weight: 600; white-space: nowrap; }}
+    .search-bar input {{
+      flex: 1;
+      min-width: 200px;
+      font-size: 1.1rem;
+      padding: 10px 14px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+    }}
+    .search-bar input:focus {{ border-color: var(--accent); }}
+    .search-bar button {{
+      font-size: 1rem;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }}
+    .tags {{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }}
+    .tag {{
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: .85rem;
+    }}
+    .industry {{
+      background: var(--card);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }}
+    .industry h2 {{
+      font-size: 1.25rem;
+      padding: 16px 20px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+    }}
+    .badge {{
+      font-size: .85rem;
+      font-weight: normal;
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      margin-left: 8px;
+    }}
+    table {{ width: 100%; border-collapse: collapse; }}
+    th, td {{ padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }}
+    th {{ background: #faf9f7; font-weight: 600; font-size: .9rem; color: var(--muted); }}
+    tr:last-child td {{ border-bottom: none; }}
+    tr:hover td {{ background: #fafdf9; }}
+    .code {{ font-family: monospace; font-size: 1.05rem; color: var(--accent); font-weight: 600; }}
+    .name {{ font-weight: 600; }}
+    .rank {{ color: var(--muted); }}
+    .cap, .price {{ color: var(--muted); font-size: .95rem; }}
+    footer {{
+      text-align: center;
+      color: var(--muted);
+      font-size: .85rem;
+      padding: 24px 0 40px;
+    }}
+    .hidden {{ display: none !important; }}
+    @media print {{
+      body {{ background: #fff; font-size: 14px; }}
+      .search-bar {{ display: none; }}
+      header {{ background: #1a6b4a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+      .industry {{ break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }}
+    }}
+    @media (max-width: 600px) {{
+      body {{ font-size: 16px; padding: 12px; }}
+      th, td {{ padding: 10px 12px; }}
+      .cap, .price {{ display: none; }}
+      th.cap-h, th.price-h, td.cap, td.price {{ display: none; }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>沪深300龙头股票名单</h1>
+      <p class="sub">从沪深300（A股最大的300家上市公司）中，按20个主流行业各选龙头企业，共 <strong>{len(stocks)}</strong> 只</p>
+      <p class="meta">数据日期：{html_mod.escape(as_of)} · 仅供学习参考，不构成投资建议</p>
+    </header>
+
+    <div class="intro">
+      <p>这份名单按<strong>行业</strong>分组，每个行业里排在前面的通常是市值更大、成交更活跃的龙头公司。可以用下面的搜索框，输入股票名称或代码快速查找。</p>
+    </div>
+
+    <div class="search-bar">
+      <label for="q">🔍 搜索</label>
+      <input id="q" type="search" placeholder="输入股票名称或代码，如：茅台、600519" autocomplete="off">
+      <button type="button" onclick="window.print()">打印 / 存PDF</button>
+    </div>
+
+    <div class="tags">{industry_summary}</div>
+
+    {"".join(industry_sections)}
+
+    <footer>沪深300龙头池 · AI Berkshire 投研工具生成 · {html_mod.escape(as_of)}</footer>
+  </div>
+  <script>
+    const q = document.getElementById('q');
+    q.addEventListener('input', () => {{
+      const term = q.value.trim().toLowerCase();
+      document.querySelectorAll('.industry').forEach(sec => {{
+        let any = false;
+        sec.querySelectorAll('tbody tr').forEach(tr => {{
+          const text = tr.textContent.toLowerCase();
+          const show = !term || text.includes(term);
+          tr.classList.toggle('hidden', !show);
+          if (show) any = true;
+        }});
+        sec.classList.toggle('hidden', !any);
+      }});
+    }});
+  </script>
+</body>
+</html>"""
+
+
+def cmd_export_html():
+    if not LATEST_JSON.exists():
+        print("请先运行 build 生成 latest.json")
+        return
+    with open(LATEST_JSON, encoding="utf-8") as f:
+        payload = json.load(f)
+    as_of = payload.get("as_of", datetime.now().strftime("%Y-%m-%d"))
+    html = render_pool_html(payload)
+    out = POOL_DIR / f"沪深300龙头池{payload.get('count', 96)}只.html"
+    out.write_text(html, encoding="utf-8")
+    print(f"已导出 HTML -> {out}")
+
+
 def cmd_explain():
     print("沪深300「20行业 × 5龙头」筛选规则摘要")
     print("详见 docs/csi300-leader-pool-methodology.md")
@@ -411,6 +660,7 @@ def main():
 
     sub.add_parser("explain", help="打印规则摘要")
     sub.add_parser("compare-recall", help="与A股召回池对比重叠率")
+    sub.add_parser("export-html", help="导出长辈可读 HTML 页面")
 
     args = parser.parse_args()
     if not args.command:
@@ -423,6 +673,8 @@ def main():
         cmd_explain()
     elif args.command == "compare-recall":
         cmd_compare_recall()
+    elif args.command == "export-html":
+        cmd_export_html()
 
 
 if __name__ == "__main__":
