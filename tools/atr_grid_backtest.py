@@ -75,13 +75,17 @@ def run_backtest(code: str, name: str, bars: list, params: dict) -> dict:
     total_ret = calc_total_return(initial, final)
     ann_ret = calc_annualized_return(initial, final, max(days, 1))
 
-    # 基准：买入持有
+    # 基准：买入持有（同期区间，100% 满仓）
+    benchmark_ret = 0.0
+    benchmark_dd = 0.0
+    benchmark_ann = 0.0
     if len(bars) > period:
-        bh_start = bars[period]["close"]
-        bh_end = bars[-1]["close"]
-        benchmark_ret = calc_total_return(bh_start, bh_end)
-    else:
-        benchmark_ret = 0.0
+        bh_start_price = bars[period]["close"]
+        bh_shares = initial / bh_start_price
+        bh_curve = [bh_shares * bars[i]["close"] for i in range(period, len(bars))]
+        benchmark_ret = calc_total_return(initial, bh_curve[-1])
+        benchmark_dd = calc_max_drawdown(bh_curve)
+        benchmark_ann = calc_annualized_return(initial, bh_curve[-1], len(bh_curve))
 
     win_days = sum(1 for r in daily_returns if r > 0)
     win_rate = win_days / len(daily_returns) * 100 if daily_returns else 0
@@ -98,6 +102,8 @@ def run_backtest(code: str, name: str, bars: list, params: dict) -> dict:
         "annualized_return_pct": round(ann_ret, 2),
         "max_drawdown_pct": round(max_dd, 2),
         "benchmark_return_pct": round(benchmark_ret, 2),
+        "benchmark_drawdown_pct": round(benchmark_dd, 2),
+        "benchmark_annualized_pct": round(benchmark_ann, 2),
         "trade_count": trade_count,
         "buy_count": buy_count,
         "sell_count": sell_count,
@@ -118,7 +124,9 @@ def print_result(r: dict):
     print(f"  总收益率:   {decimal_pct(r['total_return_pct'])}")
     print(f"  年化收益:   {decimal_pct(r['annualized_return_pct'])}")
     print(f"  最大回撤:   {decimal_pct(r['max_drawdown_pct'])}")
-    print(f"  基准持有:   {decimal_pct(r['benchmark_return_pct'])}")
+    print(f"  基准持有:   收益 {decimal_pct(r['benchmark_return_pct'])}  "
+          f"回撤 {decimal_pct(r['benchmark_drawdown_pct'])}  "
+          f"年化 {decimal_pct(r['benchmark_annualized_pct'])}")
     print(f"  调仓次数:   {r['trade_count']} (买{r['buy_count']}/卖{r['sell_count']})")
     print(f"  日胜率:     {decimal_pct(r['win_rate_pct'])}")
     print(f"  期末持仓:   {r['final_position']} 股, 权重 {r['final_weight']:.0%}")
@@ -145,7 +153,9 @@ def write_report(results: list, path: str):
             f"| 总收益率 | {r['total_return_pct']:.2f}% |",
             f"| 年化收益 | {r['annualized_return_pct']:.2f}% |",
             f"| 最大回撤 | {r['max_drawdown_pct']:.2f}% |",
-            f"| 买入持有 | {r['benchmark_return_pct']:.2f}% |",
+            f"| 基准持有收益 | {r['benchmark_return_pct']:.2f}% |",
+            f"| 基准持有回撤 | {r['benchmark_drawdown_pct']:.2f}% |",
+            f"| 基准持有年化 | {r['benchmark_annualized_pct']:.2f}% |",
             f"| 调仓次数 | {r['trade_count']} |",
             f"| 日胜率 | {r['win_rate_pct']:.1f}% |",
             f"",
