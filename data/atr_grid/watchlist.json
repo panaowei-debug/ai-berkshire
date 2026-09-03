@@ -1,0 +1,20 @@
+{
+  "etfs": ["159937", "512890", "159980", "159985", "159981"],
+  "names": {
+    "159937": "黄金ETF",
+    "512890": "红利低波ETF",
+    "159980": "有色60ETF",
+    "159985": "豆粕ETF",
+    "159981": "能源化工ETF"
+  },
+  "params": {
+    "atr_period": 20,
+    "weight_pivot": 0.50,
+    "timing_enabled": true,
+    "timing_adjust": 0.10,
+    "atr_trend_period": 5,
+    "initial_cash": 100000,
+    "max_weight": 1.0,
+    "min_weight": 0.0
+  }
+}
