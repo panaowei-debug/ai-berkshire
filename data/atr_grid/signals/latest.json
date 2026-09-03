@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-09-03T19:08:06.476306+08:00",
+  "signals": [
+    {
+      "code": "159937",
+      "name": "黄金ETF博时",
+      "action": "BUY",
+      "price": 9.09,
+      "target_weight": 0.5,
+      "current_weight": 0.0,
+      "grid_level": 0,
+      "natr": -0.3984,
+      "atr": 0.1614,
+      "mc": 9.1543,
+      "timing": "NEUTRAL",
+      "reason": "目标权重 50% > 当前 0%，NATR=-0.3984"
+    },
+    {
+      "code": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "action": "BUY",
+      "price": 1.2,
+      "target_weight": 0.5,
+      "current_weight": 0.0,
+      "grid_level": 1,
+      "natr": 1.7977,
+      "atr": 0.01285,
+      "mc": 1.1769,
+      "timing": "BULLISH",
+      "reason": "目标权重 50% > 当前 0%，NATR=1.7977"
+    },
+    {
+      "code": "159980",
+      "name": "有色ETF大成",
+      "action": "BUY",
+      "price": 2.166,
+      "target_weight": 0.5,
+      "current_weight": 0.0,
+      "grid_level": 0,
+      "natr": 0.5807,
+      "atr": 0.02075,
+      "mc": 2.154,
+      "timing": "NEUTRAL",
+      "reason": "目标权重 50% > 当前 0%，NATR=0.5807"
+    },
+    {
+      "code": "159985",
+      "name": "豆粕ETF华夏",
+      "action": "BUY",
+      "price": 2.387,
+      "target_weight": 0.1,
+      "current_weight": 0.0,
+      "grid_level": 4,
+      "natr": 4.5026,
+      "atr": 0.0387,
+      "mc": 2.2128,
+      "timing": "NEUTRAL",
+      "reason": "目标权重 10% > 当前 0%，NATR=4.5026"
+    },
+    {
+      "code": "159981",
+      "name": "能源化工ETF建信",
+      "action": "BUY",
+      "price": 1.664,
+      "target_weight": 0.3,
+      "current_weight": 0.0,
+      "grid_level": 2,
+      "natr": 2.9202,
+      "atr": 0.03635,
+      "mc": 1.5578,
+      "timing": "NEUTRAL",
+      "reason": "目标权重 30% > 当前 0%，NATR=2.9202"
+    }
+  ]
+}
